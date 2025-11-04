@@ -7,14 +7,21 @@ play a qwerty keyboard as a midi keyboard over virtual midi port.
 
 
 ```
-   2 3   5 6 7   9 0   =  -- sharps
-  q w e r t y u i o p [ 
-   s d   g h j   ;  | |
-  z x c v b n m , . | |
-  | | | | | | | | | | |
-[ C D E F G A B C D E F ]
+   2 3   5 6 7   9 0   =  > sharps
+  q w e r t y u i o p [   > notes
+ 
+   s d   g h j   ;        > sharps
+  z x c v b n m , .       > notes
+  
+```
+
+### note map:
+```
+[  c#d#  f#g#a#  c#d#  f#]
+[ C D E F G A B C D E F  ]
 ```
  
 ### controls:
 UP/DOWN: change octave
+
 LEFT/RIGHT: change velocity by jumps of 10 
