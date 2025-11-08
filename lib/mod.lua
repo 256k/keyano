@@ -6,10 +6,36 @@ local md
 local state = {
   pressedKeys = {},  
   keyPressedState = 0,
-  octave = 3,
-  velocity = 100,
-  midi_channel = 1,
 }
+
+local function init_params()
+   params:add_separator("")
+   params:add_separator("MOD - Keyano")
+   params:add{
+      type = "number",
+      id = "octave",
+      name = "Octave",
+      min = 1,
+      max = 9,
+      default = 3,
+   }
+   params:add{
+      type = "number",
+      id = "velocity",
+      name = "Velocity",
+      min = 0,
+      max = 128,
+      default = 100,
+   }
+   params:add{
+      type = "number",
+      id = "channel",
+      name = "Midi channel",
+      min = 1,
+      max = 16,
+      default = 1,
+   }
+end
 
 local function send_to_virtual_port(midi_msg)
   if not md then return false end
@@ -49,7 +75,7 @@ local function note_off(note_num, channel)
 end
 
 local function keyano_init()
-  
+   init_params()
   print("===============KEYANO INIT=====================")
 
   for _, dev in pairs(midi.devices) do
@@ -61,37 +87,48 @@ local function keyano_init()
     end
   end
   
-  function keyboard.code( code, value)
-    -- print(code, value)
-    -- print("notes[code]", notes[code])
+  function keyboard.code(code, value)
+     -- print(code, value)
+     -- print("notes[code]", notes[code])
+    local param_octave = params:get("octave")
+    local param_velocity = params:get("velocity")
+    local param_channel = params:get("channel")
+    
+     
     if (notes[code]) then
-    notes array then play a midi note
        state.pressedKeys[code] = value
        
       if (state.pressedKeys[code] == 1) then
-        note_on(notes[code] + state.octave * 12, state.velocity, state.midi_channel)
+	 note_on(notes[code] + param_octave * 12, param_velocity, param_channel)
         -- print("NOTE TRIGGERED")
       end
       
       if (state.pressedKeys[code] == 0) then
 	 -- print("note off: ", (notes[code]))
-        note_off(notes[code] + state.octave * 12, state.midi_channel)
+        note_off(notes[code] +  param_octave * 12, param_channel)
       end
     end
     
     if (value == 1 and state.keyPressedState == 0) then
       state.keyPressedState = 1
       if (code == "UP") then
-	 state.octave = math.min(9, state.octave + 1)
+	 params:set("octave", math.min(9, param_octave + 1))
       end
       if (code == "DOWN") then
-	 state.octave = math.max(1, state.octave - 1)
+	 params:set("octave", math.min(9, param_octave - 1))
       end
       if (code == "RIGHT") then
-	 state.velocity = math.min(128, state.velocity + 10)
+	 -- print("param_velocity", param_velocity)
+	 params:set("velocity",math.min(128, param_velocity + 10))
       end
       if (code == "LEFT") then
-	 state.velocity = math.max(0, state.velocity - 10)
+	 -- print("param_velocity", param_velocity)
+	 params:set("velocity",math.max(0, param_velocity - 10))
+      end
+      if (code == "ESC") then
+	 print("all notes off")
+	 --  in case midi notes freeze
+	 all_midi_notes_off()
       end
     elseif (value == 0 and state.keyPressedState == 1) then
       state.keyPressedState = 0
@@ -102,6 +139,21 @@ end
 mod.hook.register("script_post_init", "keyano script post init", keyano_init)
 
 mod.hook.register("script_post_cleanup", "keyano post script cleanup", function()
-  print("keyano post script cleanup ran.")
-  md = nil 
+		     all_midi_notes_off()
+		     print("keyano post script cleanup ran.")
+		     md = nil 
 end)
+
+function all_midi_notes_off()
+   -- tab.print(notes)
+   -- tab.print(state.pressedKeys)
+   for key, v in pairs(state.pressedKeys) do
+      print("key: ", key, "v: ", v)
+     note_off(notes[key], param_channel)  
+   end
+
+   for i=1,128 do
+      note_off(i, param_channel)
+      
+   end
+end
